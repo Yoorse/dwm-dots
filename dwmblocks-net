@@ -1,0 +1,21 @@
+#!/bin/sh
+# Network speed in bytes/sec (B/s). Auto-detects default route interface.
+
+IFACE="$(ip route 2>/dev/null | awk '/^default/ {print $5; exit}')"
+[ -z "$IFACE" ] && exit 0
+
+rx="/sys/class/net/$IFACE/statistics/rx_bytes"
+tx="/sys/class/net/$IFACE/statistics/tx_bytes"
+[ -r "$rx" ] || exit 0
+[ -r "$tx" ] || exit 0
+
+rx1=$(cat "$rx") || exit 0
+tx1=$(cat "$tx") || exit 0
+sleep 1
+rx2=$(cat "$rx") || exit 0
+tx2=$(cat "$tx") || exit 0
+
+down_bps=$((rx2 - rx1))
+up_bps=$((tx2 - tx1))
+
+printf "D:%dB/s U:%dB/s\n" "$down_bps" "$up_bps"
