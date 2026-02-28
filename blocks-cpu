@@ -1,0 +1,27 @@
+#!/bin/sh
+# Robust CPU usage (%), samples /proc/stat twice.
+
+read_cpu() {
+  # prints: user nice system idle iowait irq softirq steal
+  awk '/^cpu / {print $2, $3, $4, $5, $6, $7, $8, $9; exit}' /proc/stat
+}
+
+set -- $(read_cpu)
+u1=$1 n1=$2 s1=$3 i1=$4 w1=$5 ir1=$6 si1=$7 st1=$8
+idle1=$((i1 + w1))
+total1=$((u1 + n1 + s1 + i1 + w1 + ir1 + si1 + st1))
+
+sleep 1
+
+set -- $(read_cpu)
+u2=$1 n2=$2 s2=$3 i2=$4 w2=$5 ir2=$6 si2=$7 st2=$8
+idle2=$((i2 + w2))
+total2=$((u2 + n2 + s2 + i2 + w2 + ir2 + si2 + st2))
+
+dt=$((total2 - total1))
+di=$((idle2 - idle1))
+
+[ "$dt" -le 0 ] && { echo "0%"; exit 0; }
+
+usage=$(( (100 * (dt - di)) / dt ))
+printf "%d%%\n" "$usage"
