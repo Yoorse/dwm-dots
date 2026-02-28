@@ -1,0 +1,3 @@
+#!/bin/sh
+# shows used space on / in GB
+df -BG / | awk 'NR==2 { gsub(/G/,"",$3); printf "%sG\n",$3 }'
